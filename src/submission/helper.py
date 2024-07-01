@@ -1,10 +1,13 @@
 from .model import GPT
+from .model import CausalCrossAttention
+from .model import CausalSelfAttention
 from .dataset import NameDataset
 from .trainer import Trainer, TrainerConfig
 
 import torch
 import random
 random.seed(0)
+
 
 def initialize_vanilla_model(mconf):
     attention_model = None
@@ -22,6 +25,7 @@ def initialize_perceiver_model(mconf, bottleneck_dim=32):
     ### [part g]: Make some other model here
 
     ### START CODE HERE
+    attention_model = CausalCrossAttention(mconf)
     ### END CODE HERE
     return attention_model
 
