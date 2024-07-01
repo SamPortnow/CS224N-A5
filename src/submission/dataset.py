@@ -1,7 +1,9 @@
-import random
 import torch
 from torch.utils.data import Dataset
 import argparse
+import numpy as np
+import random
+import string
 
 """
 The input-output pairs (x, y) of the NameDataset are of the following form:
@@ -176,6 +178,43 @@ class CharCorruptionDataset(Dataset):
         ### [part e]: see spec above
 
         ### START CODE HERE
+
+        # get elem of self.data
+        doc = self.data[idx]
+        # truncate the doc
+        mx = int(self.block_size*3/4) 
+        mn = 4
+        choose_l = random.sample(range(mn, mx + 1), 1)
+        r_doc = doc[:choose_l[0]]
+        # split into substrings
+        doc_l = len(r_doc)
+        prob_doc = np.random.binomial(1, .25, doc_l)
+        prob_doc = np.mean(prob_doc)
+
+        while prob_doc * doc_l < 1:
+            prob_doc += .01
+        # get other halves
+        oh = (1 - prob_doc)/2
+        oh = int(oh * doc_l)
+        # assign prefix, masked_content, and suffix
+        prefix = r_doc[0:oh]
+        masked_content = r_doc[oh: (doc_l - oh)]
+        suffix = r_doc[(doc_l - oh):doc_l]
+
+        # rearange substrings into the following forms
+        rearr = prefix + self.MASK_CHAR +  suffix + self.MASK_CHAR + masked_content + self.MASK_CHAR 
+        # get how off the string is from block size
+        off = self.block_size - len(rearr)
+        rearr = rearr + ''.join(self.PAD_CHAR * off)
+        # lag for input output pair
+        ip = rearr[:-1]
+        op = rearr[1:]
+
+        # Encode to Long tensors
+        input_ids = torch.LongTensor([self.stoi[idx] for idx in ip])
+        output_ids = torch.LongTensor([self.stoi[idx] for idx in op])
+
+        return input_ids, output_ids
         ### END CODE HERE
 
         raise NotImplementedError
